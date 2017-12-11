@@ -24,18 +24,15 @@ public class FileSender {
 	private static String targetHost;
 	private static ArrayList<DatagramPacket> packets;
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		Scanner sc = new Scanner(System.in);
-		System.out.println("Enter filename:");
-		fileName = sc.next();
-		System.out.println("Enter target host:");
-		targetHost = sc.next();
-		sc.close();
+	public static void main(String[] args) throws IOException, InterruptedException {	
+		
+		initialize();
 		
 		processAction(Action.SENT_0);
+	
 	}
 	
-	FileSender(String targetHost, String fileName) {
+	private static void initialize() {
 		currentState = State.WAIT_FOR_CALL_0;
 		transition = new Transition[State.values().length][Action.values().length];
 		transition[State.WAIT_FOR_CALL_0.ordinal()][Action.SENT_0.ordinal()] = new Send0();
@@ -43,6 +40,13 @@ public class FileSender {
 		transition[State.WAIT_FOR_CALL_1.ordinal()][Action.SENT_1.ordinal()] = new Send1();
 		transition[State.WAIT_FOR_ACK_1.ordinal()][Action.RECEIVED_ACK_1.ordinal()] = new ReceivedAck1();
 		System.out.println("INFO FSM constructed, current state: " + currentState);
+		
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter filename:");
+		fileName = sc.next();
+		System.out.println("Enter target host:");
+		targetHost = sc.next();
+		sc.close();
 		
 		try {
 			ia = InetAddress.getByName(targetHost);
@@ -66,9 +70,10 @@ public class FileSender {
 		} catch (IOException e) {
 			System.out.println("Can´t connect to server");
 		}
-			
-	}
 
+	}
+	
+	
 	/**
 	 * * Process a action (a condition has occurred). * @param input Message or
 	 * condition that has occurred.
