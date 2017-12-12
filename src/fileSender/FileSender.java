@@ -5,7 +5,11 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
@@ -16,13 +20,13 @@ public class FileSender {
 	// 2D array defining all transitions that can occur
 	private static Transition[][] transition;
 	static final int HEADER = 10;
-	static final int DATA = 10000;
+	static final int DATA = 1000;
 	static final int PORT = 4711;
 	static final String PATH = "C:/Users/siebe/Desktop/Hochschule/Semester 3/Netzwerke/Praktikum/Blatt 7/";
 	private static InetAddress ia;
 	private static String fileName;
 	private static String targetHost;
-	private static ArrayList<DatagramPacket> packets;
+	private static Queue<DatagramPacket> packets = new LinkedBlockingQueue<DatagramPacket>();
 
 	public static void main(String[] args) throws IOException, InterruptedException {	
 		
@@ -53,14 +57,22 @@ public class FileSender {
 			Path file = Paths.get(PATH + fileName);
 			byte[] data = Files.readAllBytes(file);
 			byte[] header = new byte[HEADER];
-			
 			byte[] packet = new byte[HEADER + DATA];
-			for (int countDataBytes = 0; countDataBytes < data.length; countDataBytes += DATA) {
-				for (int i = 0; i < packet.length; ++i) {
-					packet[i] = i < header.length ? header[i] : data[i - data.length];
+			
+			
+			int countDataBytes = DATA;
+			while (countDataBytes < data.length) {
+				for (int i = 0; i < header.length; i++) {
+					packet[i] = header[i];
 				}
-				packets.add(new DatagramPacket(packet, packet.length, ia, PORT));
+				for (int i = countDataBytes - DATA; i < countDataBytes; i++) {
+					int j = 0;
+					packet[j + header.length] = data[i];
+					j++;
+				}
+				packets.offer(new DatagramPacket(packet, packet.length, ia, PORT));
 				packet = new byte[HEADER + DATA];
+				countDataBytes += DATA;
 			}
 			
 			System.out.println(packet.length);
@@ -88,7 +100,8 @@ public class FileSender {
 	}
 	
 	public static DatagramPacket getNextPacket() {
-		return packets.get(0);
+		
+		return packets.poll();
 	}
 	
 }
