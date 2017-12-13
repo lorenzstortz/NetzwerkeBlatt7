@@ -8,22 +8,37 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
-public class FileReceiver {
 
+public class FileReceiver {
+	private static State currentState;
+	private static Transition[][] transition;
+	
 	private final static int PORT = 4711;
 	private static int timeout = 1000;
 	private final static int DATA = 1000;
 
 	public static void main(String[] args) throws IOException {
-
+		initialize();
+		
 		try {
-			udpReciever();
+			udpReceiver();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 	}
+	
+	private static void initialize(){
+		currentState = State.WAIT_FOR_PACKET_0;
+		transition = new Transition[State.values().length][Action.values().length];
+		transition[State.WAIT_FOR_PACKET_0.ordinal()][Action.SEND_ACK_0.ordinal()] = new SendAck0();
+		transition[State.WAIT_FOR_PACKET_1.ordinal()][Action.SEND_ACK_1.ordinal()] = new SendAck1();
+		System.out.println("INFO FSM constructed, current state: " + currentState);
+		
+	}
 
-	private static void udpReciever() throws SocketException {
+	private static void udpReceiver() throws SocketException {
+		//TODO wait for packet with right alternating bit and return when got
+		
 		DatagramSocket UDPSocket = new DatagramSocket(PORT);
 		UDPSocket.setSoTimeout(timeout);
 		int bytes = DATA;
@@ -50,12 +65,5 @@ public class FileReceiver {
 			}
 
 		}
-		/*
-		 * double difTime = timeEnd - timeStart;
-		 * System.out.printf("Data recieved: %d bytes %n", data);
-		 * System.out.printf("Time difference: %.2f s %n", difTime / 1000);
-		 * System.out.printf("Throughput: %.0f kbits/s %n %n", (data / difTime)
-		 * * 8);
-		 */
 	}
 }
