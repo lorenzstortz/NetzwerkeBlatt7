@@ -17,6 +17,8 @@ public class FileReceiver {
 	private static int timeout = 1000;
 	private final static int DATA = 1000;
 
+	static final String PATH = "./origin/";
+
 	public static void main(String[] args) throws IOException {
 		initialize();
 		
