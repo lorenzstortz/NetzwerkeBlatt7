@@ -3,10 +3,7 @@ package fileSender;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,7 +20,7 @@ public class FileSender {
 	private static Transition[][] transition;
 	static final int HEADER = 10;
 	static final int DATA = 1000;
-	static final int PORT = 4711;
+
 	static final String PATH = "./origin/";
 	private static InetAddress ia;
 	private static String fileName;
@@ -31,18 +28,40 @@ public class FileSender {
 	private static Queue<DatagramPacket> packets = new LinkedBlockingQueue<DatagramPacket>();
 	private static Checksum checksum = new CRC32();
 
+	private static final int PORT_FILE_RECEIVER = 4711;
+	private static final int PORT_FILE_SENDER = 4712;
+
 	private static final int CHECKSUM_LENGTH = 8;
 	private static final int AB_OFFSET = 2;
 	private static final String DELIMITER = ";";
+	private static final int ACK_PACKAGE_SIZE = 2;
+	private static final int TIMEOUT = 1000;
 
 	public static void main(String[] args) throws IOException, InterruptedException {	
 		
 		initialize();
-		
-		processAction(Action.SENT_0);
-		while(true){
 
+		//for receiving ack packets
+		DatagramSocket socket = new DatagramSocket(PORT_FILE_SENDER);
+
+		//State Logic
+		while(true){
+			processAction(Action.SENT_0);
+
+			//Wait for Ack, after timeout runs out last package should be resend
+			byte[] ackPackage = new byte[ACK_PACKAGE_SIZE];
+			while(true){
+				try{
+					DatagramPacket packet =  new DatagramPacket(ackPackage, ACK_PACKAGE_SIZE);
+					socket.setSoTimeout(TIMEOUT);
+					socket.receive(packet);
+					break;
+				} catch (SocketTimeoutException e) {
+					// resend Packet
+				}
+			}
 		}
+
 	
 	}
 	
@@ -107,7 +126,7 @@ public class FileSender {
 					packet[i+ AB_OFFSET] = checksumData[i];
 				}
 
-				packets.offer(new DatagramPacket(packet, packet.length, ia, PORT));
+				packets.offer(new DatagramPacket(packet, packet.length, ia, PORT_FILE_RECEIVER));
 				packet = new byte[HEADER + DATA];
 				countDataBytes += DATA;
 			}
