@@ -6,6 +6,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.zip.CRC32;
@@ -117,7 +119,20 @@ public class FileReceiver {
 	}
 
 	private static boolean checkCRC(byte[] packet){
-
+		byte[] data = Arrays.copyOfRange(packet,HEADER, packet.length);
+		
+		//get checksum
+		checksum.reset();
+		checksum.update(data,0,data.length);
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		byte[] checksumBytes = buffer.putLong(checksum.getValue()).array();
+		
+		//check
+		for(int i = 0; i < CHECKSUM_LENGTH; i++){
+			if (packet[i+ AB_OFFSET] != checksumBytes[i]) {
+				return false;
+			}	
+		}
 		return true;
 	}
 
