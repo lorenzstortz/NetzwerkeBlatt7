@@ -1,12 +1,19 @@
 package fileReceiver;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -14,6 +21,7 @@ import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
 import fileReceiver.Filter.BaseFilter;
+import fileSender.FileWrapper;
 
 
 public class FileReceiver {
@@ -24,7 +32,7 @@ public class FileReceiver {
 	
 	private static byte[] finalData; 
 
-	static final String PATH = "./destination/";
+	static final Path PATH = Paths.get("./destination/test.txt");
 
 
 	private static Checksum checksum = new CRC32();
@@ -103,7 +111,7 @@ public class FileReceiver {
 		while(true){
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, ACK_PACKAGE_SIZE);
-				receiveSocket.setSoTimeout(TIMEOUT);
+				//receiveSocket.setSoTimeout(TIMEOUT);
 				packet = new BaseFilter(receiveSocket,packet).receive();
 				//receiveSocket.receive(packet);
 				if(receivedAddress == null){
@@ -165,10 +173,29 @@ public class FileReceiver {
         byte[] tmp = new byte[finalData.length + data.length];
         System.arraycopy(finalData, 0, tmp, 0, finalData.length);
         System.arraycopy(data, 0, tmp, finalData.length, data.length);
-        //last packet ?
         finalData = tmp;
+        
         if (currentPacket[0] == 1) {
+        	//last packet
         	finalData = Arrays.copyOfRange(finalData, 0, new String(data).lastIndexOf(DELIMITER));
+        	saveFile();
         }
+	}
+	
+	public static void saveFile() {
+		
+		ByteArrayInputStream bis = new ByteArrayInputStream(finalData);
+		try {
+			ObjectInputStream ois = new ObjectInputStream(bis);
+			FileWrapper f = (FileWrapper) ois.readObject();
+			Files.write(PATH, f.getFileData());
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("couldn't parse data");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.out.println("couldn't parse data");
+		}
+		
 	}
 }

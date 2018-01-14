@@ -142,8 +142,6 @@ public class FileSender {
 					packet[1] = 0;
 				}
 				
-
-
 				//fill Array with Data
 				int j = 0;
 				for (int i = countDataBytes - DATA; i < countDataBytes; i++) {
