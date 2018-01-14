@@ -112,6 +112,14 @@ public class FileSender {
 			byte[] rawData = Files.readAllBytes(file);
 
 			byte[] parsedData = getWrappedFileAsByteArray(fileName, rawData);
+			
+			//add Delimiter
+			byte[] delimiter = DELIMITER.getBytes();
+			byte[] tmp = new byte[parsedData.length + delimiter.length];
+	        System.arraycopy(parsedData, 0, tmp, 0, parsedData.length);
+	        System.arraycopy(delimiter, 0, tmp, parsedData.length, delimiter.length);
+	        parsedData = tmp;
+			
 			byte[] header = new byte[HEADER];
 			byte[] packet = new byte[HEADER + DATA];
 			
@@ -146,12 +154,7 @@ public class FileSender {
 				
 				//last packet ?
 				if(countDataBytes + DATA <= parsedData.length) {
-					packet[0] = 1;
-					for (int i = 0; i < DELIMITER.getBytes().length; i++) {
-						packet[j + header.length] = DELIMITER.getBytes()[i];
-						j++;
-					}
-					
+					packet[0] = 1;					
 				}
 				
 
