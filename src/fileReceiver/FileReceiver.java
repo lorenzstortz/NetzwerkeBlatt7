@@ -175,7 +175,7 @@ public class FileReceiver {
         System.arraycopy(data, 0, tmp, finalData.length, data.length);
         finalData = tmp;
         
-        if (data[0] == 1) {
+        if (currentPacket[0] == 1) {
         	//last packet
         	System.out.println("Save file");
         	finalData = Arrays.copyOfRange(finalData, 0, new String(data).lastIndexOf(DELIMITER));
