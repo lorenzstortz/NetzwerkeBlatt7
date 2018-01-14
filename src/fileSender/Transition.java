@@ -12,18 +12,8 @@ public abstract class Transition {
 class Send0 extends Transition {
 	public State execute(Action input) {
 		DatagramPacket packet = FileSender.getNextPacket();
-		try (DatagramSocket dSocket = new DatagramSocket();) {
-			long timeStart = System.currentTimeMillis();
-			dSocket.send(packet);
-
-			System.out.printf("packet send to %s %n", packet.getAddress());
-
-		} catch (SocketException e) {
-			System.out.println("Can�t connect to server.");
-		} catch (IOException e) {
-			System.out.println("Can�t send to server.");
-		}
-
+		FileSender.lastPacket = packet;
+		FileSender.sendPacket(packet);
 		return State.WAIT_FOR_ACK_0;
 	}
 }
@@ -37,18 +27,8 @@ class ReceivedAck0 extends Transition {
 class Send1 extends Transition {
 	public State execute(Action input) {
 		DatagramPacket packet = FileSender.getNextPacket();
-		try (DatagramSocket dSocket = new DatagramSocket();) {
-			long timeStart = System.currentTimeMillis();
-			dSocket.send(packet);
-
-			System.out.printf("packet send to %s %n", packet.getAddress());
-
-		} catch (SocketException e) {
-			System.out.println("Can�t connect to server.");
-		} catch (IOException e) {
-			System.out.println("Can�t send to server.");
-		}
-
+		FileSender.lastPacket = packet;
+		FileSender.sendPacket(packet);
 		return State.WAIT_FOR_ACK_1;
 	}
 }

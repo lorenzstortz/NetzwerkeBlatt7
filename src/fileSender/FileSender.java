@@ -45,6 +45,7 @@ public class FileSender {
 	private static DatagramSocket receiveSocket;
 
 	private static int packetcounter = 0;
+	public static DatagramPacket lastPacket;
 	public static void main(String[] args) throws IOException, InterruptedException {
 
 		initialize();
@@ -53,6 +54,8 @@ public class FileSender {
 		receiveSocket = new DatagramSocket(PORT_FILE_SENDER);
 
 		byte[] ackPackage = new byte[ACK_PACKAGE_SIZE];
+		long startTime;
+		long estimatedTime;
 		//State Logic
 		while(!packets.isEmpty()){
 
@@ -62,12 +65,17 @@ public class FileSender {
 					break;
 
 				case WAIT_FOR_ACK_0:
-					if(receiveAckPacket() == 0){
-						processAction(Action.RECEIVED_ACK_0);
-					} else {
-						//resend
+					startTime = System.currentTimeMillis();
+					while(true){
+						estimatedTime = System.currentTimeMillis() - startTime;
+						if(receiveAckPacket() == 0){
+							processAction(Action.RECEIVED_ACK_0);
+							break;
+						} else if(estimatedTime > TIMEOUT){
+							sendPacket(lastPacket);
+							break;
+						}
 					}
-
 					break;
 				case WAIT_FOR_CALL_1:
 
@@ -75,10 +83,16 @@ public class FileSender {
 					break;
 
 				case WAIT_FOR_ACK_1:
-					if(receiveAckPacket() == 1){
-						processAction(Action.RECEIVED_ACK_1);
-					} else {
-						//resend
+					startTime = System.currentTimeMillis();
+					while(true){
+						estimatedTime = System.currentTimeMillis() - startTime;
+						if(receiveAckPacket() == 1){
+							processAction(Action.RECEIVED_ACK_1);
+							break;
+						} else if(estimatedTime > TIMEOUT){
+							sendPacket(lastPacket);
+							break;
+						}
 					}
 					break;
 			}
@@ -195,19 +209,18 @@ public class FileSender {
 	}
 
 	private static byte receiveAckPacket(){
-		while(true){
 			try{
 				receiveSocket.setSoTimeout(TIMEOUT);
 				receiveSocket.receive(currentACKpacket);
 				return currentACKpacket.getData()[1];
 			} catch (SocketTimeoutException e) {
-				// resend Packet
+				sendPacket(lastPacket);
 			} catch (SocketException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
+			return (byte) -1;
 	}
 	
 	/**
@@ -235,6 +248,19 @@ public class FileSender {
 		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
 		byte[] checksumBytes = buffer.putLong(checksum.getValue()).array();
 		return checksumBytes;
+	}
+
+	public static void sendPacket(DatagramPacket packet){
+		try (DatagramSocket dSocket = new DatagramSocket();) {
+			//long timeStart = System.currentTimeMillis();
+			dSocket.send(packet);
+			System.out.printf("packet send to %s %n", packet.getAddress());
+		} catch (SocketException e) {
+			System.out.println("Can�t connect to server.");
+		} catch (IOException e) {
+			System.out.println("Can�t send to server.");
+		}
+
 	}
 	
 }
