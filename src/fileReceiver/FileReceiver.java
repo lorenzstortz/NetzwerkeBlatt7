@@ -1,6 +1,7 @@
 package fileReceiver;
 
 import Wrapper.FileWrapper;
+import fileReceiver.Filter.BaseFilter;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,10 +61,20 @@ public class FileReceiver {
 
 	private static ByteArrayOutputStream byos;
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
+		while (true) {
+			run();
+		}
+	}
+	
+	private static void run() {
 		initialize();
-
-		receiveSocket = new DatagramSocket(PORT_FILE_RECEIVER);
+		try {
+			receiveSocket = new DatagramSocket(PORT_FILE_RECEIVER);
+		} catch (SocketException e) {
+			System.out.println("Can´t connect to socket");
+		}
+		
 		//sendSocket = new DatagramSocket(PORT_FILE_SENDER);
 		byos = new ByteArrayOutputStream();
 		//state machine
@@ -83,6 +94,8 @@ public class FileReceiver {
 					break;
 			}
 		}
+		receiveSocket.close();
+		running = true;
 	}
 
 	private static void initialize() {

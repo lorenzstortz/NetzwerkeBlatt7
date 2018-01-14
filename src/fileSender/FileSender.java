@@ -113,11 +113,11 @@ public class FileSender {
 		System.out.println("INFO FSM constructed, current state: " + currentState);
 		
 		Scanner sc = new Scanner(System.in);
-		//System.out.println("Enter filename:");
-		//fileName = sc.next();
-		fileName = "test.zip";
-		//System.out.println("Enter target host:");
-		//targetHost = sc.next();
+		System.out.println("Enter filename:");
+		fileName = sc.next();
+
+		System.out.println("Enter target host:");
+		targetHost = sc.next();
 		targetHost = "127.0.0.1";
 		sc.close();
 		
