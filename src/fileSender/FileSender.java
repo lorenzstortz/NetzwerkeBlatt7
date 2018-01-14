@@ -1,5 +1,7 @@
 package fileSender;
 
+import Wrapper.FileWrapper;
+
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -140,7 +142,7 @@ public class FileSender {
 			//Construct packages
 			int countDataBytes = DATA;
 
-			while (countDataBytes <= parsedData.length) {
+			while (countDataBytes - DATA <= parsedData.length) {
 				for (int i = 0; i < header.length; i++) {
 					packet[i] = header[i];
 				}
@@ -158,13 +160,12 @@ public class FileSender {
 				//fill Array with Data
 				int j = 0;
 				for (int i = countDataBytes - DATA; i < countDataBytes; i++) {
-
-					packet[j + header.length] = parsedData[i];
+					if(i < parsedData.length) packet[j + header.length] = parsedData[i];
 					j++;
 				}
 				
 				//last packet ?
-				if(countDataBytes + DATA > parsedData.length) {
+				if(countDataBytes > parsedData.length) {
 					packet[0] = 1;
 					System.out.print(countDataBytes/DATA);
 				}

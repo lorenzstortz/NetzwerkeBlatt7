@@ -1,10 +1,11 @@
 package fileReceiver;
 
+import Wrapper.FileWrapper;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -12,16 +13,10 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
-
-import fileReceiver.Filter.BaseFilter;
-import fileSender.FileWrapper;
 
 
 public class FileReceiver {
@@ -32,7 +27,7 @@ public class FileReceiver {
 	
 	private static byte[] finalData;
 
-	static final String PATH = "./origin/";
+	static final String PATH = "./destination/";
 
 
 	private static Checksum checksum = new CRC32();
@@ -176,9 +171,21 @@ public class FileReceiver {
 	
 	public static void saveCurrentPacket() {
 		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, PACKET_SIZE);
+		++packetCounter;
+		System.out.println("Saving package Nr. :" + packetCounter);
         if (currentPacket[0] == 1) {
         	//last packet
-			data = Arrays.copyOfRange(data, 0, new String(data).lastIndexOf(DELIMITER));
+			//FInd Delimiter and search for consequent zeros
+			byte delimiter = 59;
+			int pos = 0;
+			//boolean truepos;
+			for(int i = 0; i < data.length; i++){
+				if(data[i] == delimiter){
+					pos = i;
+				}
+			}
+
+			data = Arrays.copyOfRange(data, 0, pos);
 			try {
 				byos.write(data);
 			} catch (IOException e) {
@@ -188,6 +195,7 @@ public class FileReceiver {
         	finalData = byos.toByteArray();
         	saveFile();
         	running = false;
+        	return;
         }
 
 		try {

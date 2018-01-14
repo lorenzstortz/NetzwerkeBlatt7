@@ -1,4 +1,4 @@
-package fileSender;
+package Wrapper;
 
 import java.io.Serializable;
 
@@ -19,8 +19,5 @@ public class FileWrapper implements Serializable {
     public byte[] getFileData() {
         return fileData;
     }
-
-
-
 
 }
