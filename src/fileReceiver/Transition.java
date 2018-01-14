@@ -1,10 +1,5 @@
 package fileReceiver;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-
 public abstract class Transition {
 	abstract public State execute(Action input);
 }
@@ -12,6 +7,7 @@ public abstract class Transition {
 class SendAck0 extends Transition {
 	public State execute(Action input) {
 		//TODO send ack0
+		FileReceiver.sendAckPacket((byte)0);
 		return State.WAIT_FOR_PACKET_1;
 	}
 }
@@ -20,6 +16,7 @@ class SendAck0 extends Transition {
 class SendAck1 extends Transition {
 	public State execute(Action input) {
 		//TODO send ack1
+		FileReceiver.sendAckPacket((byte)1);
 		return State.WAIT_FOR_PACKET_0;
 	}
 }

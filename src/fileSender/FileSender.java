@@ -18,8 +18,7 @@ public class FileSender {
 	private static State currentState;
 	// 2D array defining all transitions that can occur
 	private static Transition[][] transition;
-	static final int HEADER = 10;
-	static final int DATA = 1000;
+
 
 	static final String PATH = "./origin/";
 	private static InetAddress ia;
@@ -37,29 +36,53 @@ public class FileSender {
 	private static final int ACK_PACKAGE_SIZE = 2;
 	private static final int TIMEOUT = 1000;
 
-	public static void main(String[] args) throws IOException, InterruptedException {	
-		
+	private static final int HEADER = 10;
+	private static final int DATA = 1000;
+	private static final int PACKET_SIZE = 1010;
+
+	private static byte[] ackPackage = new byte[ACK_PACKAGE_SIZE];
+	private static DatagramPacket currentACKpacket =  new DatagramPacket(ackPackage, ACK_PACKAGE_SIZE);
+	private static DatagramSocket receiveSocket;
+
+	public static void main(String[] args) throws IOException, InterruptedException {
+
 		initialize();
 
 		//for receiving ack packets
-		DatagramSocket socket = new DatagramSocket(PORT_FILE_SENDER);
+		receiveSocket = new DatagramSocket(PORT_FILE_SENDER);
 
+		byte[] ackPackage = new byte[ACK_PACKAGE_SIZE];
 		//State Logic
-		while(true){
-			processAction(Action.SENT_0);
+		while(!packets.isEmpty()){
 
-			//Wait for Ack, after timeout runs out last package should be resend
-			byte[] ackPackage = new byte[ACK_PACKAGE_SIZE];
-			while(true){
-				try{
-					DatagramPacket packet =  new DatagramPacket(ackPackage, ACK_PACKAGE_SIZE);
-					socket.setSoTimeout(TIMEOUT);
-					socket.receive(packet);
+			switch(currentState){
+				case WAIT_FOR_CALL_0:
+					processAction(Action.SENT_0);
 					break;
-				} catch (SocketTimeoutException e) {
-					// resend Packet
-				}
+
+				case WAIT_FOR_ACK_0:
+					if(receiveAckPacket() == 0){
+						processAction(Action.RECEIVED_ACK_0);
+					} else {
+						//resend
+					}
+
+					break;
+				case WAIT_FOR_CALL_1:
+
+					processAction(Action.SENT_1);
+					break;
+
+				case WAIT_FOR_ACK_1:
+					if(receiveAckPacket() == 1){
+						processAction(Action.RECEIVED_ACK_1);
+					} else {
+						//resend
+					}
+					break;
 			}
+
+
 		}
 
 	
@@ -97,18 +120,18 @@ public class FileSender {
 			//Construct packages
 			int countDataBytes = DATA;
 
-			while (countDataBytes < parsedData.length) {
+			while (countDataBytes <= parsedData.length) {
 				for (int i = 0; i < header.length; i++) {
 					packet[i] = header[i];
 				}
 
 				//dirty approach for testing
 
-				if(countDataBytes / DATA % 2 == 0){ //set alternating bit to 0
-					packet[1] = 0;
-				}
-				else { //set alternating bit to 1
+				if(countDataBytes/ DATA % 2 == 0){ //set alternating bit to 1
 					packet[1] = 1;
+				}
+				else { //set alternating bit to 0
+					packet[1] = 0;
 				}
 
 
@@ -155,7 +178,22 @@ public class FileSender {
 			return null;
 		}
 	}
-	
+
+	private static byte receiveAckPacket(){
+		while(true){
+			try{
+				receiveSocket.setSoTimeout(TIMEOUT);
+				receiveSocket.receive(currentACKpacket);
+				return currentACKpacket.getData()[1];
+			} catch (SocketTimeoutException e) {
+				// resend Packet
+			} catch (SocketException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	/**
 	 * * Process a action (a condition has occurred). * @param input Message or

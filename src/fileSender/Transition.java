@@ -19,9 +19,9 @@ class Send0 extends Transition {
 			System.out.printf("packet send to %s %n", packet.getAddress());
 
 		} catch (SocketException e) {
-			System.out.println("Can´t connect to server.");
+			System.out.println("Canï¿½t connect to server.");
 		} catch (IOException e) {
-			System.out.println("Can´t send to server.");
+			System.out.println("Canï¿½t send to server.");
 		}
 
 		return State.WAIT_FOR_ACK_0;
@@ -44,12 +44,12 @@ class Send1 extends Transition {
 			System.out.printf("packet send to %s %n", packet.getAddress());
 
 		} catch (SocketException e) {
-			System.out.println("Can´t connect to server.");
+			System.out.println("Canï¿½t connect to server.");
 		} catch (IOException e) {
-			System.out.println("Can´t send to server.");
+			System.out.println("Canï¿½t send to server.");
 		}
 
-		return State.WAIT_FOR_ACK_0;
+		return State.WAIT_FOR_ACK_1;
 	}
 }
 
