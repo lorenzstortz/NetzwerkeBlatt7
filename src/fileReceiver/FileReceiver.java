@@ -100,7 +100,8 @@ public class FileReceiver {
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, ACK_PACKAGE_SIZE);
 				receiveSocket.setSoTimeout(TIMEOUT);
-				receiveSocket.receive(packet);
+				packet = new BaseFilter(receiveSocket,packet).receive();
+				//receiveSocket.receive(packet);
 				if(receivedAddress == null){
 					receivedAddress = packet.getAddress();
 					receivedPort = packet.getPort();
