@@ -32,7 +32,7 @@ public class FileReceiver {
 	
 	private static byte[] finalData; 
 
-	static final Path PATH = Paths.get("./destination/test.txt");
+	static final String PATH = "./origin/";
 
 
 	private static Checksum checksum = new CRC32();
@@ -112,8 +112,8 @@ public class FileReceiver {
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, ACK_PACKAGE_SIZE);
 				//receiveSocket.setSoTimeout(TIMEOUT);
-				packet = new BaseFilter(receiveSocket,packet).receive();
-				//receiveSocket.receive(packet);
+				//packet = new BaseFilter(receiveSocket,packet).receive();
+				receiveSocket.receive(packet);
 				if(receivedAddress == null){
 					receivedAddress = packet.getAddress();
 					receivedPort = packet.getPort();
@@ -175,8 +175,9 @@ public class FileReceiver {
         System.arraycopy(data, 0, tmp, finalData.length, data.length);
         finalData = tmp;
         
-        if (currentPacket[0] == 1) {
+        if (data[0] == 1) {
         	//last packet
+        	System.out.println("Save file");
         	finalData = Arrays.copyOfRange(finalData, 0, new String(data).lastIndexOf(DELIMITER));
         	saveFile();
         }
@@ -188,7 +189,7 @@ public class FileReceiver {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(bis);
 			FileWrapper f = (FileWrapper) ois.readObject();
-			Files.write(PATH, f.getFileData());
+			Files.write(Paths.get(PATH + f.getFileName()), f.getFileData());
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("couldn't parse data");
