@@ -25,7 +25,7 @@ public class BitErrorFilter implements Filter{
 			
 			packet = new DatagramPacket(data, data.length, packet.getSocketAddress());
 			
-			System.out.println("Packet contains biterror");
+			//System.out.println("Packet contains biterror");
 			return packet;
 		}
 		return packet;

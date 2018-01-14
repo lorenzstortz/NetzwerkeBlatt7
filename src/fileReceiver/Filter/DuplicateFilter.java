@@ -5,7 +5,7 @@ import java.net.DatagramPacket;
 
 
 public class DuplicateFilter implements Filter{
-	private static final double DUPLICATEPERCENT = 0.1;
+	private static final double DUPLICATEPERCENT = 0.05;
 
 	private DatagramPacket packetToSendAgain = null;
 
@@ -24,7 +24,7 @@ public class DuplicateFilter implements Filter{
 			}
 			return packet;
 		} else {
-			System.out.println("Duplicating package");
+			//System.out.println("Duplicating package");
 			DatagramPacket packet = packetToSendAgain;
 			packetToSendAgain = null;
 			return packet;

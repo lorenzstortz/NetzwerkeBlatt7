@@ -17,7 +17,7 @@ public class LostFilter implements Filter{
 	public DatagramPacket receive() throws IOException {
 		DatagramPacket packet = filter.receive();
 		while (Math.random() < PROBABILITYLOST) {
-			System.out.println("Loosing package");
+			//System.out.println("Loosing package");
 			packet = filter.receive();
 		}
 		return packet;

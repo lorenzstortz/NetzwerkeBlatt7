@@ -227,17 +227,17 @@ public class FileSender {
 	 * condition that has occurred.
 	 */
 	public static void processAction(Action input) {
-		System.out.println("INFO Received " + input + " in state " + currentState);
+		//System.out.println("INFO Received " + input + " in state " + currentState);
 		Transition trans = transition[currentState.ordinal()][input.ordinal()];
 		if (trans != null) {
 			currentState = trans.execute(input);
 		}
-		System.out.println("INFO State: " + currentState);
+		//System.out.println("INFO State: " + currentState);
 	}
 	
 	public static DatagramPacket getNextPacket() {
 		++packetcounter;
-		System.out.println("Retrieved packet Nr. :" + packetcounter);
+		//System.out.println("Retrieved packet Nr. :" + packetcounter);
 		return packets.poll();
 	}
 
@@ -253,7 +253,7 @@ public class FileSender {
 		try (DatagramSocket dSocket = new DatagramSocket();) {
 			//long timeStart = System.currentTimeMillis();
 			dSocket.send(packet);
-			System.out.printf("packet send to %s %n", packet.getAddress());
+			//System.out.printf("packet send to %s %n", packet.getAddress());
 		} catch (SocketException e) {
 			System.out.println("Can�t connect to server.");
 		} catch (IOException e) {

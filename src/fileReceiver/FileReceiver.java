@@ -26,6 +26,9 @@ public class FileReceiver {
 
 	private static int timeout = 1000;
 	
+	private static long timeStart = 0;
+	private static long timeEnd = 0;
+	
 	private static byte[] finalData;
 
 	static final String PATH = "./destination/";
@@ -107,17 +110,19 @@ public class FileReceiver {
 
 	}
 
+	
+	
 	/**
 	 * * Process a action (a condition has occurred). * @param input Message or
 	 * condition that has occurred.
 	 */
 	public static void processAction(Action input) {
-		System.out.println("INFO Received " + input + " in state " + currentState);
+		//System.out.println("INFO Received " + input + " in state " + currentState);
 		Transition trans = transition[currentState.ordinal()][input.ordinal()];
 		if (trans != null) {
 			currentState = trans.execute(input);
 		}
-		System.out.println("INFO State: " + currentState);
+		//System.out.println("INFO State: " + currentState);
 	}
 
 	///Returns the alternating bit
@@ -126,14 +131,18 @@ public class FileReceiver {
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, PACKET_SIZE);
 				//receiveSocket.setSoTimeout(TIMEOUT);
-				//packet = new BaseFilter(receiveSocket,packet).receive();
-				receiveSocket.receive(packet);
+				packet = new BaseFilter(receiveSocket,packet).getPacket();
+				//receiveSocket.receive(packet);
 				if(receivedAddress == null){
 					receivedAddress = packet.getAddress();
 					receivedPort = packet.getPort();
 				}	
 				currentPacket = packet.getData();
-				System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
+				//System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
+				if (timeStart == 0) {
+					timeStart = System.currentTimeMillis();
+				}
+				timeEnd = System.currentTimeMillis();
 				return packet.getData()[1];
 			} catch (SocketTimeoutException e) {
 				// resend Packet, ne nich wirklich
@@ -173,7 +182,7 @@ public class FileReceiver {
 		try (DatagramSocket dSocket = new DatagramSocket()) {
 			long timeStart = System.currentTimeMillis();
 			dSocket.send(packet);
-			System.out.print("ACK " + bit+ " packet send to" + packet.getAddress() );
+			//System.out.print("ACK " + bit+ " packet send to" + packet.getAddress() );
 
 		} catch (SocketException e) {
 			System.out.println("Can�t connect to server.");
@@ -182,10 +191,11 @@ public class FileReceiver {
 		}
 	}
 	
-	public static void saveCurrentPacket() {
+	public static void saveCurrentPacket() {		
+		
 		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, PACKET_SIZE);
 		++packetCounter;
-		System.out.println("Saving package Nr. :" + packetCounter);
+		//System.out.println("Saving package Nr. :" + packetCounter);
         if (currentPacket[0] == 1) {
         	//last packet
 			//FInd Delimiter and search for consequent zeros
@@ -225,6 +235,10 @@ public class FileReceiver {
 			ObjectInputStream ois = new ObjectInputStream(bis);
 			FileWrapper f = (FileWrapper) ois.readObject();
 			Files.write(Paths.get(PATH + f.getFileName()), f.getFileData());
+			//calculate goodput
+			double difTime = timeEnd - timeStart;
+			System.out.printf("Throughput: %.3f MBits/s %n %n", (f.getFileData().length * 8 / difTime) / 1000);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("couldn't parse data");
