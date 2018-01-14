@@ -19,7 +19,4 @@ public class FileWrapper implements Serializable {
         return fileData;
     }
 
-
-
-
 }
