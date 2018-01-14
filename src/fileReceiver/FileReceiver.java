@@ -30,7 +30,7 @@ public class FileReceiver {
 
 	private static int timeout = 1000;
 	
-	private static byte[] finalData; 
+	private static byte[] finalData;
 
 	static final String PATH = "./origin/";
 
@@ -63,12 +63,14 @@ public class FileReceiver {
 
 	//static DatagramSocket sendSocket;
 
+	private static ByteArrayOutputStream byos;
+
 	public static void main(String[] args) throws IOException {
 		initialize();
 
 		receiveSocket = new DatagramSocket(PORT_FILE_RECEIVER);
 		//sendSocket = new DatagramSocket(PORT_FILE_SENDER);
-
+		byos = new ByteArrayOutputStream();
 		//state machine
 		while(running){
 			switch(currentState){
@@ -114,7 +116,7 @@ public class FileReceiver {
 	private static byte receivePacket() {
 		while(true){
 			try{
-				DatagramPacket packet =  new DatagramPacket(currentPacket, ACK_PACKAGE_SIZE);
+				DatagramPacket packet =  new DatagramPacket(currentPacket, PACKET_SIZE);
 				//receiveSocket.setSoTimeout(TIMEOUT);
 				//packet = new BaseFilter(receiveSocket,packet).receive();
 				receiveSocket.receive(packet);
@@ -126,7 +128,7 @@ public class FileReceiver {
 				System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
 				return packet.getData()[1];
 			} catch (SocketTimeoutException e) {
-				// resend Packet
+				// resend Packet, ne nich wirklich
 			}catch (SocketException e){
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -173,18 +175,26 @@ public class FileReceiver {
 	}
 	
 	public static void saveCurrentPacket() {
-		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, currentPacket.length);
-        byte[] tmp = new byte[finalData.length + data.length];
-        System.arraycopy(finalData, 0, tmp, 0, finalData.length);
-        System.arraycopy(data, 0, tmp, finalData.length, data.length);
-        finalData = tmp;
-        
+		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, PACKET_SIZE);
         if (currentPacket[0] == 1) {
         	//last packet
+			data = Arrays.copyOfRange(data, 0, new String(data).lastIndexOf(DELIMITER));
+			try {
+				byos.write(data);
+			} catch (IOException e) {
+				System.out.println("Something bad happened");
+			}
         	System.out.println("Save file");
-        	finalData = Arrays.copyOfRange(finalData, 0, new String(data).lastIndexOf(DELIMITER));
+        	finalData = byos.toByteArray();
         	saveFile();
+        	running = false;
         }
+
+		try {
+			byos.write(data);
+		} catch (IOException e) {
+			System.out.println("Something bad happened");
+		}
 	}
 	
 	public static void saveFile() {
