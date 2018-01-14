@@ -111,8 +111,7 @@ public class FileSender {
 			Path file = Paths.get(PATH + fileName);
 			byte[] rawData = Files.readAllBytes(file);
 
-			byte [] parsedData = getWrappedFileAsByteArray(fileName, rawData);
-
+			byte[] parsedData = getWrappedFileAsByteArray(fileName, rawData);
 			byte[] header = new byte[HEADER];
 			byte[] packet = new byte[HEADER + DATA];
 			
@@ -125,6 +124,7 @@ public class FileSender {
 					packet[i] = header[i];
 				}
 
+								
 				//dirty approach for testing
 
 				if(countDataBytes/ DATA % 2 == 0){ //set alternating bit to 1
@@ -133,6 +133,7 @@ public class FileSender {
 				else { //set alternating bit to 0
 					packet[1] = 0;
 				}
+				
 
 
 				//fill Array with Data
@@ -142,6 +143,17 @@ public class FileSender {
 					packet[j + header.length] = parsedData[i];
 					j++;
 				}
+				
+				//last packet ?
+				if(countDataBytes + DATA <= parsedData.length) {
+					packet[0] = 1;
+					for (int i = 0; i < DELIMITER.getBytes().length; i++) {
+						packet[j + header.length] = DELIMITER.getBytes()[i];
+						j++;
+					}
+					
+				}
+				
 
 				//Create checksum and apply it
 				byte[] checksumData = getChecksum(Arrays.copyOfRange(packet,HEADER, packet.length)); // to is exclusive, no -1 necessary

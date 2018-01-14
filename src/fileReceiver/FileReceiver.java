@@ -21,6 +21,8 @@ public class FileReceiver {
 	private static Transition[][] transition;
 
 	private static int timeout = 1000;
+	
+	private static byte[] finalData; 
 
 	static final String PATH = "./destination/";
 
@@ -62,10 +64,12 @@ public class FileReceiver {
 			switch(currentState){
 				case WAIT_FOR_PACKET_0:
 					if(receivePacket() == 0 && checkCRC(currentPacket))
+					saveCurrentPacket();
 					processAction(Action.SEND_ACK_0);
 					break;
 				case WAIT_FOR_PACKET_1:
 					if(receivePacket() == 1 && checkCRC(currentPacket))
+					saveCurrentPacket();
 					processAction(Action.SEND_ACK_1);
 					break;
 			}
@@ -95,7 +99,7 @@ public class FileReceiver {
 	}
 
 	///Returns the alternating bit
-	private static byte receivePacket( ){
+	private static byte receivePacket() {
 		while(true){
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, ACK_PACKAGE_SIZE);
@@ -105,7 +109,8 @@ public class FileReceiver {
 				if(receivedAddress == null){
 					receivedAddress = packet.getAddress();
 					receivedPort = packet.getPort();
-				}
+				}	
+				currentPacket = packet.getData();
 				System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
 				return packet.getData()[1];
 			} catch (SocketTimeoutException e) {
@@ -153,5 +158,17 @@ public class FileReceiver {
 		} catch (IOException e) {
 			System.out.println("Can�t send to server.");
 		}
+	}
+	
+	public static void saveCurrentPacket() {
+		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, currentPacket.length);
+        byte[] tmp = new byte[finalData.length + data.length];
+        System.arraycopy(finalData, 0, tmp, 0, finalData.length);
+        System.arraycopy(data, 0, tmp, finalData.length, data.length);
+        //last packet ?
+        finalData = tmp;
+        if (currentPacket[0] == 1) {
+        	finalData = Arrays.copyOfRange(finalData, 0, new String(data).lastIndexOf(DELIMITER));
+        }
 	}
 }
