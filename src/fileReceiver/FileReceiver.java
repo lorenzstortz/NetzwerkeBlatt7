@@ -11,6 +11,8 @@ import java.util.Scanner;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+import fileReceiver.Filter.BaseFilter;
+
 
 public class FileReceiver {
 	private static State currentState;
@@ -67,14 +69,14 @@ public class FileReceiver {
 			}
 		}
 	}
-	
-	private static void initialize(){
+
+	private static void initialize() {
 		currentState = State.WAIT_FOR_PACKET_0;
 		transition = new Transition[State.values().length][Action.values().length];
 		transition[State.WAIT_FOR_PACKET_0.ordinal()][Action.SEND_ACK_0.ordinal()] = new SendAck0();
 		transition[State.WAIT_FOR_PACKET_1.ordinal()][Action.SEND_ACK_1.ordinal()] = new SendAck1();
 		System.out.println("INFO FSM constructed, current state: " + currentState);
-		
+
 	}
 
 	/**
@@ -103,7 +105,6 @@ public class FileReceiver {
 				}
 				System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
 				return packet.getData()[1];
-
 			} catch (SocketTimeoutException e) {
 				// resend Packet
 			}catch (SocketException e){
@@ -137,6 +138,4 @@ public class FileReceiver {
 			System.out.println("Can�t send to server.");
 		}
 	}
-
-
 }
