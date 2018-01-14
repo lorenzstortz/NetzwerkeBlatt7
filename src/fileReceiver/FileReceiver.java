@@ -8,11 +8,13 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
+import fileReceiver.Filter.BaseFilter;
+
 
 public class FileReceiver {
 	private static State currentState;
 	private static Transition[][] transition;
-	
+
 	private final static int PORT = 4711;
 	private static int timeout = 1000;
 	private final static int DATA = 1000;
@@ -21,26 +23,26 @@ public class FileReceiver {
 
 	public static void main(String[] args) throws IOException {
 		initialize();
-		
+
 		try {
 			udpReceiver();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private static void initialize(){
+
+	private static void initialize() {
 		currentState = State.WAIT_FOR_PACKET_0;
 		transition = new Transition[State.values().length][Action.values().length];
 		transition[State.WAIT_FOR_PACKET_0.ordinal()][Action.SEND_ACK_0.ordinal()] = new SendAck0();
 		transition[State.WAIT_FOR_PACKET_1.ordinal()][Action.SEND_ACK_1.ordinal()] = new SendAck1();
 		System.out.println("INFO FSM constructed, current state: " + currentState);
-		
+
 	}
 
 	private static void udpReceiver() throws SocketException {
-		//TODO wait for packet with right alternating bit and return when got
-		
+		// TODO wait for packet with right alternating bit and return when got
+
 		DatagramSocket UDPSocket = new DatagramSocket(PORT);
 		UDPSocket.setSoTimeout(timeout);
 		int bytes = DATA;
@@ -53,12 +55,19 @@ public class FileReceiver {
 			// wait for packet
 			DatagramPacket packet = new DatagramPacket(new byte[bytes], bytes);
 			try {
-				UDPSocket.receive(packet);
+				BaseFilter filter = new BaseFilter(UDPSocket, packet);
 				timeEnd = System.currentTimeMillis();
+				// filter packet
+				packet = filter.getPacket();
 				// get data
 				InetAddress address = packet.getAddress();
 				data += packet.getLength();
 				System.out.printf("package from %s recieved %n", address);
+				if (currentState == State.WAIT_FOR_PACKET_0) {
+					processMsg(Action.SEND_ACK_0);
+				} else {
+					processMsg(Action.SEND_ACK_1);
+				}
 			} catch (SocketTimeoutException e) {
 				// timeout
 				System.out.println("timeout");
@@ -67,5 +76,14 @@ public class FileReceiver {
 			}
 
 		}
+	}
+
+	public static void processMsg(Action input) {
+		System.out.println("INFO Received " + input + " in state " + currentState);
+		Transition trans = transition[currentState.ordinal()][input.ordinal()];
+		if (trans != null) {
+			currentState = trans.execute(input);
+		}
+		System.out.println("INFO State: " + currentState);
 	}
 }
