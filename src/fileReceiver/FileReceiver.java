@@ -59,6 +59,8 @@ public class FileReceiver {
 	private static InetAddress receivedAddress;
 	private static int receivedPort;
 
+	private static boolean running = true;
+
 	//static DatagramSocket sendSocket;
 
 	public static void main(String[] args) throws IOException {
@@ -68,17 +70,19 @@ public class FileReceiver {
 		//sendSocket = new DatagramSocket(PORT_FILE_SENDER);
 
 		//state machine
-		while(true){
+		while(running){
 			switch(currentState){
 				case WAIT_FOR_PACKET_0:
-					if(receivePacket() == 0 && checkCRC(currentPacket))
-					saveCurrentPacket();
-					processAction(Action.SEND_ACK_0);
+					if(receivePacket() == 0 && checkCRC(currentPacket)){
+						saveCurrentPacket();
+						processAction(Action.SEND_ACK_0);
+					}
 					break;
 				case WAIT_FOR_PACKET_1:
-					if(receivePacket() == 1 && checkCRC(currentPacket))
-					saveCurrentPacket();
-					processAction(Action.SEND_ACK_1);
+					if(receivePacket() == 1 && checkCRC(currentPacket)){
+						saveCurrentPacket();
+						processAction(Action.SEND_ACK_1);
+					}
 					break;
 			}
 		}

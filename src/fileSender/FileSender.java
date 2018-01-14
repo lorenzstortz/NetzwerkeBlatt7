@@ -44,6 +44,7 @@ public class FileSender {
 	private static DatagramPacket currentACKpacket =  new DatagramPacket(ackPackage, ACK_PACKAGE_SIZE);
 	private static DatagramSocket receiveSocket;
 
+	private static int packetcounter = 0;
 	public static void main(String[] args) throws IOException, InterruptedException {
 
 		initialize();
@@ -151,8 +152,9 @@ public class FileSender {
 				}
 				
 				//last packet ?
-				if(countDataBytes + DATA <= parsedData.length) {
-					packet[0] = 1;					
+				if(countDataBytes + DATA > parsedData.length) {
+					packet[0] = 1;
+					System.out.print(countDataBytes/DATA);
 				}
 				
 
@@ -167,7 +169,7 @@ public class FileSender {
 				countDataBytes += DATA;
 			}
 			
-			System.out.println(packet.length);
+			System.out.println("There are so many packets:" +packets.size());
 			
 		} catch (UnknownHostException e ){
 			System.out.println("Unkown host");
@@ -222,6 +224,8 @@ public class FileSender {
 	}
 	
 	public static DatagramPacket getNextPacket() {
+		++packetcounter;
+		System.out.println("Retrieved packet Nr. :" + packetcounter);
 		return packets.poll();
 	}
 
