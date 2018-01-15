@@ -75,24 +75,43 @@ public class FileReceiver {
 		try {
 			receiveSocket = new DatagramSocket(PORT_FILE_RECEIVER);
 		} catch (SocketException e) {
-			System.out.println("Can´t connect to socket");
+			System.out.println("Canï¿½t connect to socket");
 		}
 		
 		//sendSocket = new DatagramSocket(PORT_FILE_SENDER);
 		byos = new ByteArrayOutputStream();
 		//state machine
+		int receivedWrongPackage = 0;
+		int ab;
 		while(running){
 			switch(currentState){
 				case WAIT_FOR_PACKET_0:
-					if(receivePacket() == 0 && checkCRC(currentPacket)){
+					ab = receivePacket();
+					if(ab == 0 && checkCRC(currentPacket)){
 						saveCurrentPacket();
 						processAction(Action.SEND_ACK_0);
+						receivedWrongPackage = 0;
+					}
+					else if(ab == 1) {
+						receivedWrongPackage ++;
+						if(receivedWrongPackage > 2){
+							sendAckPacket((byte)1);
+							receivedWrongPackage = 0;
+						}
 					}
 					break;
 				case WAIT_FOR_PACKET_1:
-					if(receivePacket() == 1 && checkCRC(currentPacket)){
+					ab = receivePacket();
+					if(ab == 1 && checkCRC(currentPacket)){
 						saveCurrentPacket();
 						processAction(Action.SEND_ACK_1);
+						receivedWrongPackage = 0;
+					}else if(ab == 0) {
+						receivedWrongPackage ++;
+						if(receivedWrongPackage > 2){
+							sendAckPacket((byte)0);
+							receivedWrongPackage = 0;
+						}
 					}
 					break;
 			}
@@ -117,12 +136,12 @@ public class FileReceiver {
 	 * condition that has occurred.
 	 */
 	public static void processAction(Action input) {
-		//System.out.println("INFO Received " + input + " in state " + currentState);
+		System.out.println("INFO Received " + input + " in state " + currentState);
 		Transition trans = transition[currentState.ordinal()][input.ordinal()];
 		if (trans != null) {
 			currentState = trans.execute(input);
 		}
-		//System.out.println("INFO State: " + currentState);
+		System.out.println("INFO State: " + currentState);
 	}
 
 	///Returns the alternating bit
@@ -131,14 +150,14 @@ public class FileReceiver {
 			try{
 				DatagramPacket packet =  new DatagramPacket(currentPacket, PACKET_SIZE);
 				//receiveSocket.setSoTimeout(TIMEOUT);
-				packet = new BaseFilter(receiveSocket,packet).getPacket();
-				//receiveSocket.receive(packet);
+				//packet = new BaseFilter(receiveSocket,packet).getPacket();
+				receiveSocket.receive(packet);
 				if(receivedAddress == null){
 					receivedAddress = packet.getAddress();
 					receivedPort = packet.getPort();
 				}	
 				currentPacket = packet.getData();
-				//System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
+				System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
 				if (timeStart == 0) {
 					timeStart = System.currentTimeMillis();
 					System.out.println("started");
@@ -175,7 +194,6 @@ public class FileReceiver {
 	}
 
 	//Should be called with 0 or 1 accordingly
-	@SuppressWarnings("Duplicates")
 	public static void sendAckPacket(byte bit){
 		byte[] content = new byte[ACK_PACKAGE_SIZE];
 		content[1] = bit;
@@ -183,7 +201,7 @@ public class FileReceiver {
 		try (DatagramSocket dSocket = new DatagramSocket()) {
 			long timeStart = System.currentTimeMillis();
 			dSocket.send(packet);
-			//System.out.print("ACK " + bit+ " packet send to" + packet.getAddress() );
+			System.out.print("ACK " + bit+ " packet send to" + packet.getAddress() );
 
 		} catch (SocketException e) {
 			System.out.println("Canï¿½t connect to server.");
@@ -196,7 +214,7 @@ public class FileReceiver {
 		
 		byte[] data = Arrays.copyOfRange(currentPacket, HEADER, PACKET_SIZE);
 		++packetCounter;
-		//System.out.println("Saving package Nr. :" + packetCounter);
+		System.out.println("Saving package Nr. :" + packetCounter);
         if (currentPacket[0] == 1) {
         	//last packet
 			//FInd Delimiter and search for consequent zeros
