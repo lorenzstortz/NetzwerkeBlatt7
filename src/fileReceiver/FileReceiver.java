@@ -141,6 +141,7 @@ public class FileReceiver {
 				//System.out.println("Receceived a package with alternating bit:" + packet.getData()[1]);
 				if (timeStart == 0) {
 					timeStart = System.currentTimeMillis();
+					System.out.println("started");
 				}
 				timeEnd = System.currentTimeMillis();
 				return packet.getData()[1];
@@ -237,7 +238,9 @@ public class FileReceiver {
 			Files.write(Paths.get(PATH + f.getFileName()), f.getFileData());
 			//calculate goodput
 			double difTime = timeEnd - timeStart;
-			System.out.printf("Throughput: %.3f MBits/s %n %n", (f.getFileData().length * 8 / difTime) / 1000);
+			System.out.printf("Time: %.0f ms %n", difTime);
+			System.out.printf("Throughput: %.3f MBits/s %n %n", 
+					((f.getFileData().length + f.getFileName().length()) * 8 / difTime) / 1000);
 			
 		} catch (IOException e) {
 			e.printStackTrace();

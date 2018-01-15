@@ -34,7 +34,7 @@ public class FileSender {
 	private static final int AB_OFFSET = 2;
 	private static final String DELIMITER = ";";
 	private static final int ACK_PACKAGE_SIZE = 2;
-	private static final int TIMEOUT = 1000;
+	private static final int TIMEOUT = 200;
 
 	private static final int HEADER = 10;
 	private static final int DATA = 1000;
